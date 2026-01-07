@@ -12,6 +12,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { closestCenter, DndContext } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 
 interface Props {
   product: Product;
@@ -149,6 +150,7 @@ const ProductItem = ({ product, index, total }: Props) => {
           <DndContext
             collisionDetection={closestCenter}
             onDragEnd={onVariantDragEnd}
+            modifiers={[restrictToParentElement]}
           >
             <SortableContext
               items={product.variants.map((v) => v.id)}

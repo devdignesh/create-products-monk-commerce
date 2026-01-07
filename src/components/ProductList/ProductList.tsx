@@ -6,6 +6,7 @@ import {
 import { useProducts } from "../../context/useProducts";
 import ProductItem from "../ProductItem/ProductItem";
 import { closestCenter, DndContext } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 
 const ProductList = () => {
   const { products, setProducts } = useProducts();
@@ -23,7 +24,11 @@ const ProductList = () => {
 
   return (
     <div>
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToParentElement]}
+      >
         <SortableContext
           items={products.map((p) => p.id)}
           strategy={verticalListSortingStrategy}
