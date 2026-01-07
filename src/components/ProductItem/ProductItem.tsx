@@ -84,7 +84,11 @@ const ProductItem = ({ product, index, total }: Props) => {
       {product.isExpanded && (
         <div>
           {product.variants.map((variant) => (
-            <VariantItem key={variant.id} variant={variant} />
+            <VariantItem
+              key={variant.id}
+              variant={variant}
+              productIndex={index}
+            />
           ))}
         </div>
       )}

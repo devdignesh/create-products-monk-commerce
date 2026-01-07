@@ -1,3 +1,4 @@
+import { IoMdClose } from "react-icons/io";
 import { useProducts } from "../../context/useProducts";
 import type { Variant } from "../../types/variant";
 
@@ -20,8 +21,29 @@ const VariantItem = ({ variant, productIndex }: Props) => {
         return {
           ...product,
           variants: product.variants.map((v) =>
-            v.id === variant.id ? { ...v, [field]: value } : v
+            v.id === variant.id
+              ? {
+                  ...v,
+                  discountType: v.discountType ?? "PERCENT",
+                  [field]: value,
+                }
+              : v
           ),
+        };
+      })
+    );
+  };
+
+  const removeVariant = () => {
+    setProducts((prev) =>
+      prev.map((product, pIndex) => {
+        if (pIndex !== productIndex) return product;
+
+        if (product.variants.length === 1) return product;
+
+        return {
+          ...product,
+          variants: product.variants.filter((v) => v.id !== variant.id),
         };
       })
     );
@@ -52,6 +74,13 @@ const VariantItem = ({ variant, productIndex }: Props) => {
         <option value="PERCENT">% Off</option>
         <option value="FLAT">Flat off</option>
       </select>
+
+      <button
+        onClick={removeVariant}
+        className="text-neutral-800 cursor-pointer"
+      >
+        <IoMdClose size={18} />
+      </button>
     </div>
   );
 };
