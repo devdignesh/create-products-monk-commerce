@@ -5,4 +5,6 @@ export interface Variant {
   product_id: number;
   title: string;
   price: string;
+  discountType?: DiscountType;
+  discountValue?: number;
 }
