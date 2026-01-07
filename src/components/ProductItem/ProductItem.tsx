@@ -2,6 +2,7 @@ import { IoMdClose } from "react-icons/io";
 import type { Product } from "../../types/product";
 import VariantItem from "../VariantItem/VariantItem";
 import { useProducts } from "../../context/useProducts";
+import { useState } from "react";
 
 interface Props {
   product: Product;
@@ -11,6 +12,7 @@ interface Props {
 
 const ProductItem = ({ product, index, total }: Props) => {
   const { products, setProducts } = useProducts();
+  const [showDiscount, setShowDiscount] = useState(!!product.discountValue);
 
   const updateProductDiscount = (
     field: "discountType" | "discountValue",
@@ -34,6 +36,12 @@ const ProductItem = ({ product, index, total }: Props) => {
     setProducts((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const enableDiscount = () => {
+    setShowDiscount(true);
+    updateProductDiscount("discountType", "PERCENT");
+    updateProductDiscount("discountValue", 0);
+  };
+
   const showToggle = product.variants.length > 1;
 
   return (
@@ -45,31 +53,42 @@ const ProductItem = ({ product, index, total }: Props) => {
           className="py-2 flex-1 text-sm px-4 border rounded shadow-sm"
         />
 
-        <input
-          type="number"
-          placeholder="0"
-          className="py-2 px-4 w-20 border rounded"
-          onChange={(e) =>
-            updateProductDiscount("discountValue", Number(e.target.value))
-          }
-          value={product.discountValue || ""}
-        />
-
-        <select
-          className="py-2 px-4 border rounded"
-          value={product.discountType ?? "PERCENT"}
-          onChange={(e) =>
-            updateProductDiscount("discountType", e.target.value)
-          }
-        >
-          <option value="PERCENT">% Off</option>
-          <option value="FLAT">Flat off</option>
-        </select>
-
-        {total > 1 && (
-          <button onClick={removeProduct}>
-            <IoMdClose size={20} />
+        {!showDiscount ? (
+          <button
+            onClick={enableDiscount}
+            className="text-sm px-4 py-2 border-2 rounded bg-[#008060] text-white"
+          >
+            Add Discount
           </button>
+        ) : (
+          <>
+            <input
+              type="number"
+              placeholder="0"
+              className="py-2 px-4 w-20 border rounded"
+              onChange={(e) =>
+                updateProductDiscount("discountValue", Number(e.target.value))
+              }
+              value={product.discountValue || ""}
+            />
+
+            <select
+              className="py-2 px-4 border rounded"
+              value={product.discountType ?? "PERCENT"}
+              onChange={(e) =>
+                updateProductDiscount("discountType", e.target.value)
+              }
+            >
+              <option value="PERCENT">% Off</option>
+              <option value="FLAT">Flat off</option>
+            </select>
+
+            {total > 1 && (
+              <button onClick={removeProduct}>
+                <IoMdClose size={20} />
+              </button>
+            )}
+          </>
         )}
       </div>
       {showToggle && (
