@@ -12,6 +12,15 @@ interface Props {
 const ProductItem = ({ product, index, total }: Props) => {
   const { products, setProducts } = useProducts();
 
+  const updateProductDiscount = (
+    field: "discountType" | "discountValue",
+    value: any
+  ) => {
+    setProducts((prev) =>
+      prev.map((p, i) => (i === index ? { ...p, [field]: value } : p))
+    );
+  };
+
   const toggleVariants = () => {
     setProducts((prev) =>
       prev.map((p, i) =>
@@ -22,7 +31,6 @@ const ProductItem = ({ product, index, total }: Props) => {
 
   const removeProduct = () => {
     if (products.length === 1) return;
-
     setProducts((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -37,9 +45,23 @@ const ProductItem = ({ product, index, total }: Props) => {
           className="py-2 flex-1 text-sm px-4 border rounded shadow-sm"
         />
 
-        <input type="number" className="py-2 px-4 w-20 border rounded" />
+        <input
+          type="number"
+          placeholder="0"
+          className="py-2 px-4 w-20 border rounded"
+          onChange={(e) =>
+            updateProductDiscount("discountValue", Number(e.target.value))
+          }
+          value={product.discountValue || ""}
+        />
 
-        <select className="py-2 px-4 border rounded">
+        <select
+          className="py-2 px-4 border rounded"
+          value={product.discountType ?? "PERCENT"}
+          onChange={(e) =>
+            updateProductDiscount("discountType", e.target.value)
+          }
+        >
           <option value="PERCENT">% Off</option>
           <option value="FLAT">Flat off</option>
         </select>

@@ -12,4 +12,6 @@ export interface Product {
   image: Image;
   variants: Variant[];
   isExpanded?: boolean;
+  discountType?: "PERCENT" | "FIXED";
+  discountValue?: number;
 }
