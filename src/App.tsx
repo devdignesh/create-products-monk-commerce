@@ -1,13 +1,7 @@
-
-import './App.css'
+import ProductBuilder from "./pages/ProductBuilder";
 
 function App() {
- 
-  return (
-    <>
-       
-    </>
-  )
+  return <ProductBuilder />;
 }
 
-export default App
+export default App;
