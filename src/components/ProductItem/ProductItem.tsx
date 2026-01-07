@@ -3,6 +3,15 @@ import type { Product } from "../../types/product";
 import VariantItem from "../VariantItem/VariantItem";
 import { useProducts } from "../../context/useProducts";
 import { useState } from "react";
+import { MdDragIndicator } from "react-icons/md";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { closestCenter, DndContext } from "@dnd-kit/core";
 
 interface Props {
   product: Product;
@@ -13,6 +22,14 @@ interface Props {
 const ProductItem = ({ product, index, total }: Props) => {
   const { products, setProducts } = useProducts();
   const [showDiscount, setShowDiscount] = useState(!!product.discountValue);
+
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: product.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const updateProductDiscount = (
     field: "discountType" | "discountValue",
@@ -42,11 +59,38 @@ const ProductItem = ({ product, index, total }: Props) => {
     updateProductDiscount("discountValue", 0);
   };
 
+  const onVariantDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setProducts((prev) =>
+      prev.map((p, pIndex) => {
+        if (pIndex !== index) return p;
+
+        const oldIndex = p.variants.findIndex((v) => v.id === active.id);
+        const newIndex = p.variants.findIndex((v) => v.id === over.id);
+
+        return {
+          ...p,
+          variants: arrayMove(p.variants, oldIndex, newIndex),
+        };
+      })
+    );
+  };
+
   const showToggle = product.variants.length > 1;
 
   return (
-    <div className="p-4 bg-white rounded mb-2">
+    <div ref={setNodeRef} style={style} className="p-4 bg-white rounded mb-2">
       <div className="flex items-center gap-2">
+        <span
+          {...listeners}
+          {...attributes}
+          className="cursor-grab text-gray-500"
+        >
+          <MdDragIndicator size={23} />
+        </span>
+
         <input
           value={product.title}
           readOnly
@@ -101,14 +145,24 @@ const ProductItem = ({ product, index, total }: Props) => {
       )}
 
       {product.isExpanded && (
-        <div>
-          {product.variants.map((variant) => (
-            <VariantItem
-              key={variant.id}
-              variant={variant}
-              productIndex={index}
-            />
-          ))}
+        <div className="mt-4">
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={onVariantDragEnd}
+          >
+            <SortableContext
+              items={product.variants.map((v) => v.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {product.variants.map((variant) => (
+                <VariantItem
+                  key={variant.id}
+                  variant={variant}
+                  productIndex={index}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
     </div>

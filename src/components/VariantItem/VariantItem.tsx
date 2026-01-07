@@ -1,6 +1,9 @@
 import { IoMdClose } from "react-icons/io";
 import { useProducts } from "../../context/useProducts";
 import type { Variant } from "../../types/variant";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { MdDragIndicator } from "react-icons/md";
 
 interface Props {
   variant: Variant;
@@ -9,6 +12,14 @@ interface Props {
 
 const VariantItem = ({ variant, productIndex }: Props) => {
   const { setProducts } = useProducts();
+
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: variant.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const updateVariantDiscount = (
     field: "discountType" | "discountValue",
@@ -50,7 +61,19 @@ const VariantItem = ({ variant, productIndex }: Props) => {
   };
 
   return (
-    <div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 mb-2"
+    >
+      <span
+        {...listeners}
+        {...attributes}
+        className="cursor-grab text-gray-500"
+      >
+        <MdDragIndicator size={23} />
+      </span>
+
       <input
         value={variant.title}
         readOnly
