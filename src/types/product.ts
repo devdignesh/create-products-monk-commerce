@@ -11,4 +11,5 @@ export interface Product {
   title: string;
   image: Image;
   variants: Variant[];
+  isExpanded?: boolean;
 }

@@ -1,6 +1,7 @@
 import { IoMdClose } from "react-icons/io";
 import type { Product } from "../../types/product";
 import VariantItem from "../VariantItem/VariantItem";
+import { useProducts } from "../../context/useProducts";
 
 interface Props {
   product: Product;
@@ -8,7 +9,25 @@ interface Props {
   total: number;
 }
 
-const ProductItem = ({ product }: Props) => {
+const ProductItem = ({ product, index, total }: Props) => {
+  const { products, setProducts } = useProducts();
+
+  const toggleVariants = () => {
+    setProducts((prev) =>
+      prev.map((p, i) =>
+        i === index ? { ...p, isExpanded: !p.isExpanded } : p
+      )
+    );
+  };
+
+  const removeProduct = () => {
+    if (products.length === 1) return;
+
+    setProducts((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const showToggle = product.variants.length > 1;
+
   return (
     <div className="p-4 bg-white rounded mb-2">
       <div className="flex items-center gap-2">
@@ -25,16 +44,28 @@ const ProductItem = ({ product }: Props) => {
           <option value="FLAT">Flat off</option>
         </select>
 
-        <button>
-          <IoMdClose size={20} />
-        </button>
+        {total > 1 && (
+          <button onClick={removeProduct}>
+            <IoMdClose size={20} />
+          </button>
+        )}
       </div>
+      {showToggle && (
+        <span
+          onClick={toggleVariants}
+          className="text-sm flex justify-end mt-2 cursor-pointer text-blue-600 underline"
+        >
+          {product.isExpanded ? "Hide variants" : "Show variants"}
+        </span>
+      )}
 
-      <div>
-        {product.variants.map((variant) => (
-          <VariantItem key={variant.id} variant={variant} />
-        ))}
-      </div>
+      {product.isExpanded && (
+        <div>
+          {product.variants.map((variant) => (
+            <VariantItem key={variant.id} variant={variant} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -14,6 +14,10 @@ const ProductList = () => {
           total={products.length}
         />
       ))}
+
+      <button className="mt-4 w-40 px-4 text-sm py-2 border-2 text-[#008060]">
+        Add Product
+      </button>
     </div>
   );
 };
