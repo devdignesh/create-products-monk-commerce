@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Product list manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React app to pick products, select variants, apply discounts and reorder everything using drag & drop. Built with React, TypeScript, TailwindCSS, dnd-kit (drag & drop) and host on [Netlify](https://create-products-monk-commerce.netlify.app/).
 
-Currently, two official plugins are available:
+---
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* React + TypeScript
+* Vite
+* dnd-kit (drag & drop)
+* Context API (state management)
+* Tailwind CSS
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+* Product picker modal with variants
+* Select product or individual variants
+* Merge variants when the same product is added multiple times
+* Drag & drop for products and variants (dnd-kit)
+* Discount per product
+* Prevent duplicate variant selection
+* Clean, understandable UI
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting started
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+```bash
+npm install
+npm run dev
+```
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Environment variables
+
+Create a `.env` file at the root:
+
+```env
+VITE_API_URL=https://stageapi.monkcommerce.app/task/products/search
+VITE_API_KEY=<API_KEY>
+
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Approach
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+* **Product is the source of truth** – variants always belong to a product
+* **Selections are additive** – selecting new variants never removes existing ones
+* **Local state kept minimal** – heavy logic stays close to where it’s used
+* **IDs over indexes** – safer reordering and updates
+
+---
+
+## Optimization notes
+
+* Avoid unnecessary re-renders by:
+
+  * Memoizing list items where needed
+  * Keeping modal selection state separate from main list state
+* No deep cloning of large objects
+* Drag events only update state on `onDragEnd`
+
+---
+
+## Notes
+
+* Stock / availability is derived from `inventory_quantity` on variants
+* Variants with zero quantity are treated as unavailable
