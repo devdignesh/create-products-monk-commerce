@@ -14,20 +14,39 @@ import ProductPickerModal from "../ProductPicker/ProductPickerModal";
 const ProductList = () => {
   const { products, setProducts } = useProducts();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
 
-  const openPicker = (index: number) => {
-    setReplaceIndex(index);
+  const openPicker = () => {
     setPickerOpen(true);
   };
 
   const handleConfirm = (picked: Product[]) => {
-    if (replaceIndex === null) return;
-
     setProducts((prev) => {
-      const copy = [...prev];
-      copy.splice(replaceIndex, 1, ...picked);
-      return copy;
+      const updated = [...prev];
+
+      picked.forEach((newProduct) => {
+        const existingIndex = updated.findIndex((p) => p.id === newProduct.id);
+
+        if (existingIndex === -1) {
+          // New product
+          updated.push(newProduct);
+        } else {
+          // Merge variants
+          const existing = updated[existingIndex];
+          const mergedVariants = [
+            ...existing.variants,
+            ...newProduct.variants.filter(
+              (v) => !existing.variants.some((ev) => ev.id === v.id)
+            ),
+          ];
+
+          updated[existingIndex] = {
+            ...existing,
+            variants: mergedVariants,
+          };
+        }
+      });
+
+      return updated;
     });
 
     setPickerOpen(false);

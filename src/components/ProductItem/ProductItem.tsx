@@ -18,7 +18,7 @@ interface Props {
   product: Product;
   index: number;
   total: number;
-  openPicker: (index: number) => void;
+  openPicker: () => void;
 }
 
 const ProductItem = ({ product, index, total, openPicker }: Props) => {
@@ -96,7 +96,7 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
         <input
           value={product.title}
           readOnly
-          onClick={() => openPicker(index)}
+          onClick={() => openPicker()}
           className="py-2 flex-1 text-sm px-4 border rounded shadow-sm"
         />
 
