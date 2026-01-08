@@ -64,7 +64,7 @@ const VariantItem = ({ variant, productIndex }: Props) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 mb-2"
+      className="flex items-center gap-2 my-4"
     >
       <span
         {...listeners}
@@ -77,27 +77,31 @@ const VariantItem = ({ variant, productIndex }: Props) => {
       <input
         value={variant.title}
         readOnly
-        className="py-2 flex-1 text-sm px-4 border rounded shadow-sm"
+        className="py-2 w-full rounded-full items-center flex justify-between text-sm px-4 border border-neutral-300 shadow-sm bg-white"
       />
 
-      <input
-        type="number"
-        value={variant.discountValue ?? ""}
-        onChange={(e) =>
-          updateVariantDiscount("discountValue", Number(e.target.value))
-        }
-        className="py-2 px-4 w-20 border rounded-3xl"
-      />
+      <div className="flex space-x-3 w-[70%]">
+        <input
+          type="number"
+          placeholder="0"
+          value={variant.discountValue ?? ""}
+          onChange={(e) =>
+            updateVariantDiscount("discountValue", Number(e.target.value))
+          }
+          className="py-2 px-4 w-25 text-sm border rounded-full bg-white border-neutral-400 shadow-sm focus:outline-none"
+        />
 
-      <select
-        value={variant.discountType ?? "PERCENT"}
-        onChange={(e) => updateVariantDiscount("discountType", e.target.value)}
-        className="py-2 px-4 border rounded-3xl"
-      >
-        <option value="PERCENT">% Off</option>
-        <option value="FLAT">Flat off</option>
-      </select>
-
+        <select
+          value={variant.discountType ?? "PERCENT"}
+          onChange={(e) =>
+            updateVariantDiscount("discountType", e.target.value)
+          }
+          className="py-2 px-2 w-25 text-sm rounded-full border bg-white border-neutral-400 shadow-sm focus:outline-none"
+        >
+          <option value="PERCENT">% Off</option>
+          <option value="FLAT">Flat off</option>
+        </select>
+      </div>
       <button
         onClick={removeVariant}
         className="text-neutral-800 cursor-pointer"

@@ -85,9 +85,14 @@ const ProductList = () => {
           ))}
         </SortableContext>
       </DndContext>
-      <button className="mt-4 w-40 px-4 text-sm py-2 border-2 text-[#008060]">
-        Add Product
-      </button>
+      <div className="flex justify-end mx-10 pt-2">
+        <button
+          className="w-72 px-4 text-sm py-2 cursor-pointer border-2 text-[#008060]"
+          onClick={() => openPicker()}
+        >
+          Add Product
+        </button>
+      </div>
 
       <ProductPickerModal
         open={pickerOpen}

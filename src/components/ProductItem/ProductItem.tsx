@@ -13,6 +13,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { closestCenter, DndContext } from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
+import { BiSolidPencil } from "react-icons/bi";
 
 interface Props {
   product: Product;
@@ -83,8 +84,8 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
   const showToggle = product.variants.length > 1;
 
   return (
-    <div ref={setNodeRef} style={style} className="p-4 bg-white rounded mb-2">
-      <div className="flex items-center gap-2">
+    <div ref={setNodeRef} style={style} className="m-2 my-3">
+      <div className="flex w-full items-center gap-2">
         <span
           {...listeners}
           {...attributes}
@@ -93,62 +94,76 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
           <MdDragIndicator size={23} />
         </span>
 
-        <input
-          value={product.title}
-          readOnly
-          onClick={() => openPicker()}
-          className="py-2 flex-1 text-sm px-4 border rounded shadow-sm"
-        />
-
-        {!showDiscount ? (
+        <div className="py-1 w-full items-center flex justify-between text-sm px-4 border border-neutral-300 shadow-sm bg-white">
+          <input
+            value={product.title}
+            readOnly
+            className="w-full focus:outline-none"
+            placeholder="Select Product"
+          />
           <button
-            onClick={enableDiscount}
-            className="text-sm px-4 py-2 border-2 rounded bg-[#008060] text-white"
+            className="p-2 cursor-pointer hover:bg-neutral-200"
+            onClick={() => openPicker()}
           >
-            Add Discount
+            <BiSolidPencil size={20} className="text-[#008060]" />
           </button>
-        ) : (
-          <>
-            <input
-              type="number"
-              placeholder="0"
-              className="py-2 px-4 w-20 border rounded"
-              onChange={(e) =>
-                updateProductDiscount("discountValue", Number(e.target.value))
-              }
-              value={product.discountValue || ""}
-            />
+        </div>
 
-            <select
-              className="py-2 px-4 border rounded"
-              value={product.discountType ?? "PERCENT"}
-              onChange={(e) =>
-                updateProductDiscount("discountType", e.target.value)
-              }
+        <div className="flex space-x-3 w-[70%]">
+          {!showDiscount ? (
+            <button
+              onClick={enableDiscount}
+              className="text-sm w-full px-4 py-3 cursor-pointer border-2 rounded bg-[#008060] text-white"
             >
-              <option value="PERCENT">% Off</option>
-              <option value="FLAT">Flat off</option>
-            </select>
+              Add Discount
+            </button>
+          ) : (
+            <>
+              <div className="flex space-x-2">
+                <input
+                  type="number"
+                  placeholder="0"
+                  className="py-2 px-4 w-25 border border-neutral-400 shadow-sm focus:outline-none"
+                  onChange={(e) =>
+                    updateProductDiscount(
+                      "discountValue",
+                      Number(e.target.value)
+                    )
+                  }
+                  value={product.discountValue || ""}
+                />
 
-            {total > 1 && (
-              <button onClick={removeProduct}>
-                <IoMdClose size={20} />
-              </button>
-            )}
-          </>
-        )}
+                <select
+                  className="py-2 px-2 w-25 text-sm border border-neutral-400 shadow-sm focus:outline-none"
+                  value={product.discountType ?? "PERCENT"}
+                  onChange={(e) =>
+                    updateProductDiscount("discountType", e.target.value)
+                  }
+                >
+                  <option value="PERCENT">% Off</option>
+                  <option value="FLAT">Flat off</option>
+                </select>
+              </div>
+            </>
+          )}
+          {total > 1 && (
+            <button onClick={removeProduct} className="cursor-pointer">
+              <IoMdClose size={20} />
+            </button>
+          )}
+        </div>
       </div>
       {showToggle && (
         <span
           onClick={toggleVariants}
-          className="text-sm flex justify-end mt-2 cursor-pointer text-blue-600 underline"
+          className="text-sm flex justify-end mt-1 mr-9 cursor-pointer text-blue-600 underline"
         >
           {product.isExpanded ? "Hide variants" : "Show variants"}
         </span>
       )}
 
       {product.isExpanded && (
-        <div className="mt-4">
+        <div className="ml-12">
           <DndContext
             collisionDetection={closestCenter}
             onDragEnd={onVariantDragEnd}

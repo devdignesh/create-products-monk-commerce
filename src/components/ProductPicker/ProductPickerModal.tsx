@@ -26,6 +26,7 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const existingVariantIds = useMemo(() => {
     return new Set(
@@ -48,6 +49,7 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
     const data = await res.json();
     setItems((prev) => (reset ? data : [...prev, ...data]));
     setLoading(false);
+    setInitialLoading(false);
   };
 
   useEffect(() => {
@@ -55,6 +57,7 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
       setSelected({});
       setItems([]);
       setPage(0);
+      setInitialLoading(true);
       fetchProducts(true);
     }
   }, [open]);
@@ -152,78 +155,86 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
           </div>
         </div>
 
-        <div
-          className="flex-1 overflow-auto  border-y py-2 border-neutral-300"
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-              setPage((p) => p + 1);
-              fetchProducts();
-            }
-          }}
-        >
-          {items.map((product) => {
-            const selectedProduct = selected[product.id];
-            const isProductselected =
-              !!selectedProduct &&
-              Object.keys(selectedProduct.variants).length > 0;
+        {initialLoading ? (
+          <div className="flex-1 flex justify-center items-center p-10 border-y border-neutral-300">
+            <span className="">Loading...</span>
+          </div>
+        ) : (
+          <div
+            className="flex-1 overflow-auto  border-y py-2 border-neutral-300"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                setPage((p) => p + 1);
+                fetchProducts();
+              }
+            }}
+          >
+            {items.map((product) => {
+              const selectedProduct = selected[product.id];
+              const isProductselected =
+                !!selectedProduct &&
+                Object.keys(selectedProduct.variants).length > 0;
 
-            return (
-              <div key={product.id} className="">
-                <div className="flex items-center gap-3 px-5">
-                  <input
-                    type="checkbox"
-                    checked={isProductselected}
-                    onChange={() => toggleProduct(product)}
-                    className="h-4 w-4"
-                  />
+              return (
+                <div key={product.id} className="">
+                  <div className="flex items-center gap-3 px-5">
+                    <input
+                      type="checkbox"
+                      checked={isProductselected}
+                      onChange={() => toggleProduct(product)}
+                      className="h-4 w-4"
+                    />
 
-                  <img
-                    src={product.image?.src || ""}
-                    className="w-9 h-9 rounded overflow-hidden bg-gray-100 object-cover"
-                  />
+                    <img
+                      src={product.image?.src || ""}
+                      className="w-9 h-9 rounded overflow-hidden bg-gray-100 object-cover"
+                    />
 
-                  <span className="text-[15px]">{product.title}</span>
-                </div>
+                    <span className="text-[15px]">{product.title}</span>
+                  </div>
 
-                <div className="py-3 text-[15px]">
-                  {product.variants.map((variant) => {
-                    const disabled = existingVariantIds.has(variant.id);
-                    return (
-                      <div
-                        key={variant.id}
-                        className="flex items-center pl-12 gap-3 px-3 py-4 border-y border-neutral-300"
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4"
-                          disabled={disabled}
-                          checked={
-                            disabled
-                              ? true
-                              : !!selectedProduct?.variants[variant.id]
-                          }
-                          onChange={() => toggleVariant(product, variant)}
-                        />
-                        <span className="flex-1 pl-5 text-[15px]">
-                          {variant.title}
-                        </span>
-                        <div className="flex gap-6">
-                          {variant.inventory_quantity && (
-                            <span className="flex-1">
-                              {variant.inventory_quantity} available
+                  <div className="py-3 text-[15px]">
+                    {product.variants.map((variant) => {
+                      const disabled = existingVariantIds.has(variant.id);
+                      return (
+                        <div
+                          key={variant.id}
+                          className="flex items-center pl-12 gap-3 px-3 py-4 border-y border-neutral-300"
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            disabled={disabled}
+                            checked={
+                              disabled
+                                ? true
+                                : !!selectedProduct?.variants[variant.id]
+                            }
+                            onChange={() => toggleVariant(product, variant)}
+                          />
+                          <span className="flex-1 pl-5 text-[15px]">
+                            {variant.title}
+                          </span>
+                          <div className="flex gap-6">
+                            {variant.inventory_quantity && (
+                              <span className="flex-1">
+                                {variant.inventory_quantity} available
+                              </span>
+                            )}
+                            <span className="text-[15px]">
+                              ${variant.price}
                             </span>
-                          )}
-                          <span className="text-[15px]">${variant.price}</span>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="p-4 px-5 flex justify-between items-center">
           <span className="text-sm">{selectedCount} products selected</span>
