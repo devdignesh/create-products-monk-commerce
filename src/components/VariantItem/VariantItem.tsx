@@ -1,6 +1,7 @@
+import type { ChangeEvent } from "react";
 import { IoMdClose } from "react-icons/io";
 import { useProducts } from "../../context/useProducts";
-import type { Variant } from "../../types/variant";
+import type { DiscountType, Variant } from "../../types/variant";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MdDragIndicator } from "react-icons/md";
@@ -11,7 +12,7 @@ interface Props {
 }
 
 const VariantItem = ({ variant, productIndex }: Props) => {
-  const { setProducts } = useProducts();
+  const { products, setProducts } = useProducts();
 
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: variant.id });
@@ -23,7 +24,7 @@ const VariantItem = ({ variant, productIndex }: Props) => {
 
   const updateVariantDiscount = (
     field: "discountType" | "discountValue",
-    value: any
+    value: DiscountType | number
   ) => {
     setProducts((prev) =>
       prev.map((product, pIndex) => {
@@ -60,6 +61,13 @@ const VariantItem = ({ variant, productIndex }: Props) => {
     );
   };
 
+  const handleDiscountTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const discountType = event.target.value as DiscountType;
+    updateVariantDiscount("discountType", discountType);
+  };
+
+  const canRemoveVariant = (products?.[productIndex]?.variants.length ?? 0) > 1;
+
   return (
     <div
       ref={setNodeRef}
@@ -93,21 +101,21 @@ const VariantItem = ({ variant, productIndex }: Props) => {
 
         <select
           value={variant.discountType ?? "PERCENT"}
-          onChange={(e) =>
-            updateVariantDiscount("discountType", e.target.value)
-          }
+          onChange={handleDiscountTypeChange}
           className="py-2 px-2 w-25 text-sm rounded-full border bg-white border-neutral-400 shadow-sm focus:outline-none"
         >
           <option value="PERCENT">% Off</option>
           <option value="FLAT">Flat off</option>
         </select>
       </div>
-      <button
-        onClick={removeVariant}
-        className="text-neutral-800 cursor-pointer"
-      >
-        <IoMdClose size={18} />
-      </button>
+      {canRemoveVariant && (
+        <button
+          onClick={removeVariant}
+          className="text-neutral-800 cursor-pointer"
+        >
+          <IoMdClose size={18} />
+        </button>
+      )}
     </div>
   );
 };

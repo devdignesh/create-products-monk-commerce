@@ -81,7 +81,7 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
     );
   };
 
-  const showToggle = product.variants.length > 1;
+  const showToggle = product.variants.length > 0;
 
   return (
     <div ref={setNodeRef} style={style} className="m-2 my-3">
