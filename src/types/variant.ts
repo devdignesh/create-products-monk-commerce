@@ -7,4 +7,5 @@ export interface Variant {
   price: string;
   discountType?: DiscountType;
   discountValue?: number;
+  inventory_quantity: number;
 }
