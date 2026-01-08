@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import type { Product } from "../../types/product";
 import type { Variant } from "../../types/variant";
+import { useProducts } from "../../context/useProducts";
 
 interface SelectState {
   [productId: number]: {
@@ -17,12 +18,22 @@ interface Props {
 }
 
 const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
+  const { products: existingProducts } = useProducts();
+
   const [items, setItems] = useState<Product[]>([]);
   const [selected, setSelected] = useState<SelectState>({});
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const existingVariantIds = useMemo(() => {
+    return new Set(
+      existingProducts.flatMap((p) => p.variants.map((v) => v.id))
+    );
+  }, [existingProducts]);
 
   const fetchProducts = async (reset = false) => {
+    if (loading) return;
     const res = await fetch(
       `${import.meta.env.VITE_API_URL}?search=${search}&page=${
         reset ? 0 : page
@@ -35,17 +46,24 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
     );
     const data = await res.json();
     setItems((prev) => (reset ? data : [...prev, ...data]));
+    setLoading(false);
   };
 
   useEffect(() => {
     if (open) {
       setSelected({});
+      setItems([]);
       setPage(0);
       fetchProducts(true);
     }
   }, [open]);
 
   const toggleProduct = (product: Product) => {
+    const selectableVariants = product.variants.filter(
+      (v) => !existingVariantIds.has(v.id)
+    );
+    if (selectableVariants.length === 0) return;
+
     setSelected((prev) => {
       if (prev[product.id]) {
         const copy = { ...prev };
@@ -64,18 +82,13 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
   };
 
   const toggleVariant = (product: Product, variant: Variant) => {
-    setSelected((prev) => {
-      const entry = prev[product.id];
+    if (existingVariantIds.has(variant.id)) return;
 
-      if (!entry) {
-        return {
-          ...prev,
-          [product.id]: {
-            product,
-            variants: { [variant.id]: variant },
-          },
-        };
-      }
+    setSelected((prev) => {
+      const entry = prev[product.id] ?? {
+        product,
+        variants: {},
+      };
 
       const variants = { ...entry.variants };
       if (variants[variant.id]) delete variants[variant.id];
@@ -107,6 +120,8 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
 
     onConfirm(result);
   };
+
+  const selectedCount = Object.keys(selected).length;
 
   if (!open) return null;
 
@@ -143,17 +158,16 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
         >
           {items.map((product) => {
             const selectedProduct = selected[product.id];
-            const allVariantsSelected =
-              selectedProduct &&
-              Object.keys(selectedProduct.variants).length ===
-                product.variants.length;
+            const isProductselected =
+              !!selectedProduct &&
+              Object.keys(selectedProduct.variants).length > 0;
 
             return (
               <div key={product.id} className="">
                 <div className="flex items-center gap-3 px-5">
                   <input
                     type="checkbox"
-                    checked={!!selectedProduct && allVariantsSelected}
+                    checked={isProductselected}
                     onChange={() => toggleProduct(product)}
                     className="h-4 w-4"
                   />
@@ -166,47 +180,58 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
                   <span className="text-[15px]">{product.title}</span>
                 </div>
 
-                <div className="py-3">
-                  {product.variants.map((variant) => (
-                    <div
-                      key={variant.id}
-                      className="flex items-center pl-12 gap-3 px-3 py-4 border-y border-neutral-300"
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4"
-                        checked={!!selectedProduct?.variants[variant.id]}
-                        onChange={() => toggleVariant(product, variant)}
-                      />
-                      <span className="flex-1 pl-5 text-[15px]">
-                        {variant.title}
-                      </span>
-                      <div className="flex gap-6">
-                        {variant.inventory_quantity && (
-                          <span className="flex-1">
-                            {variant.inventory_quantity} available
-                          </span>
-                        )}
-                        <span className="text-[15px]">${variant.price}</span>
+                <div className="py-3 text-[15px]">
+                  {product.variants.map((variant) => {
+                    const disabled = existingVariantIds.has(variant.id);
+                    return (
+                      <div
+                        key={variant.id}
+                        className="flex items-center pl-12 gap-3 px-3 py-4 border-y border-neutral-300"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          disabled={disabled}
+                          checked={!!selectedProduct?.variants[variant.id]}
+                          onChange={() => toggleVariant(product, variant)}
+                        />
+                        <span className="flex-1 pl-5 text-[15px]">
+                          {variant.title}
+                        </span>
+                        <div className="flex gap-6">
+                          {variant.inventory_quantity && (
+                            <span className="flex-1">
+                              {variant.inventory_quantity} available
+                            </span>
+                          )}
+                          <span className="text-[15px]">${variant.price}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="p-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 border rounded">
-            Cancel
-          </button>
-          <button
-            onClick={confirmSelection}
-            className="px-4 py-2 bg-[#008060] text-white rounded"
-          >
-            Add Selected
-          </button>
+        <div className="p-4 px-5 flex justify-between items-center">
+          <span className="text-sm">{selectedCount} products selected</span>
+
+          <div className="flex gap-4">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border cursor-pointer border-neutral-500 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSelection}
+              className="px-4 py-2 bg-[#008060] text-white rounded cursor-pointer"
+            >
+              Add
+            </button>
+          </div>
         </div>
       </div>
     </div>
