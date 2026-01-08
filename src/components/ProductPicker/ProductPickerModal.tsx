@@ -3,6 +3,7 @@ import { IoMdClose } from "react-icons/io";
 import type { Product } from "../../types/product";
 import type { Variant } from "../../types/variant";
 import { useProducts } from "../../context/useProducts";
+import { IoSearchOutline } from "react-icons/io5";
 
 interface SelectState {
   [productId: number]: {
@@ -130,24 +131,29 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
       <div className="bg-white w-165 max-h-[80vh] rounded shadow flex flex-col">
         <div className="p-4 px-5 border-b border-neutral-300  flex justify-between">
           <span className="font-semibold">Select Products</span>
-          <button onClick={onClose}>
+          <button onClick={onClose} className="cursor-pointer">
             <IoMdClose size={20} />
           </button>
         </div>
 
-        <input
-          className="m-4 mx-5 px-3 py-2 border text-[15px] border-neutral-300 focus:outline-none"
-          placeholder="Search products"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-            fetchProducts(true);
-          }}
-        />
+        <div className="shadow-sm">
+          <div className="flex gap-2 items-center m-4 mx-5 px-3 py-2 border text-[15px] border-neutral-300 focus:outline-none">
+            <IoSearchOutline size={20} className="text-neutral-400" />
+            <input
+              className="focus:outline-none w-full focus:border-none"
+              placeholder="Search products"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+                fetchProducts(true);
+              }}
+            />
+          </div>
+        </div>
 
         <div
-          className="flex-1 overflow-auto border-y py-2 border-neutral-300 "
+          className="flex-1 overflow-auto  border-y py-2 border-neutral-300"
           onScroll={(e) => {
             const el = e.currentTarget;
             if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
@@ -192,7 +198,11 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
                           type="checkbox"
                           className="h-4 w-4"
                           disabled={disabled}
-                          checked={!!selectedProduct?.variants[variant.id]}
+                          checked={
+                            disabled
+                              ? true
+                              : !!selectedProduct?.variants[variant.id]
+                          }
                           onChange={() => toggleVariant(product, variant)}
                         />
                         <span className="flex-1 pl-5 text-[15px]">
