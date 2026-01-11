@@ -14,42 +14,50 @@ import ProductPickerModal from "../ProductPicker/ProductPickerModal";
 const ProductList = () => {
   const { products, setProducts } = useProducts();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  const openPicker = () => {
+  const openPicker = (index: number | null = null) => {
+    setEditingIndex(index);
     setPickerOpen(true);
   };
 
   const handleConfirm = (picked: Product[]) => {
     setProducts((prev) => {
-      const updated = [...prev];
+      //  add new products
+      if (editingIndex === null) {
+        return [...prev, ...picked];
+      }
 
-      picked.forEach((newProduct) => {
-        const existingIndex = updated.findIndex((p) => p.id === newProduct.id);
+      const editingProduct = prev[editingIndex];
 
-        if (existingIndex === -1) {
-          // New product
-          updated.push(newProduct);
-        } else {
-          // Merge variants
-          const existing = updated[existingIndex];
-          const mergedVariants = [
-            ...existing.variants,
-            ...newProduct.variants.filter(
-              (v) => !existing.variants.some((ev) => ev.id === v.id)
-            ),
-          ];
+      // If exactly one product picked and it's the SAME product -> merge variants
+      if (picked.length === 1 && picked[0].id === editingProduct.id) {
+        const existingVariantIds = new Set(
+          editingProduct.variants.map((v) => v.id)
+        );
 
-          updated[existingIndex] = {
-            ...existing,
-            variants: mergedVariants,
-          };
-        }
-      });
+        const mergedVariants = [
+          ...editingProduct.variants,
+          ...picked[0].variants.filter((v) => !existingVariantIds.has(v.id)),
+        ];
 
-      return updated;
+        const updatedProduct: Product = {
+          ...editingProduct,
+          variants: mergedVariants,
+        };
+
+        return prev.map((p, i) => (i === editingIndex ? updatedProduct : p));
+      }
+
+      // Otherwise -> replace edited product
+      const before = prev.slice(0, editingIndex);
+      const after = prev.slice(editingIndex + 1);
+
+      return [...before, ...picked, ...after];
     });
 
     setPickerOpen(false);
+    setEditingIndex(null);
   };
 
   const handleDragEnd = (event: any) => {
@@ -61,6 +69,18 @@ const ProductList = () => {
       const newIndex = prev.findIndex((p) => p.id === over.id);
       return arrayMove(prev, oldIndex, newIndex);
     });
+  };
+
+  const addEmptyProduct = () => {
+    setProducts((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        image: { id: 0, product_id: Date.now(), src: "" },
+        title: "",
+        variants: [],
+      } as Product,
+    ]);
   };
 
   return (
@@ -80,15 +100,15 @@ const ProductList = () => {
               product={product}
               index={index}
               total={products.length}
-              openPicker={openPicker}
+              openPicker={() => openPicker(index)}
             />
           ))}
         </SortableContext>
       </DndContext>
       <div className="flex justify-end mx-10 pt-2">
         <button
-          className="w-72 px-4 text-sm py-2 cursor-pointer border-2 text-[#008060]"
-          onClick={() => openPicker()}
+          className="w-full sm:w-72 px-4 text-sm py-2 cursor-pointer border-2 border-[#008060] text-[#008060]"
+          onClick={addEmptyProduct}
         >
           Add Product
         </button>

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { IoMdClose } from "react-icons/io";
 import type { Product } from "../../types/product";
 import type { Variant } from "../../types/variant";
 import { useProducts } from "../../context/useProducts";
-import { IoSearchOutline } from "react-icons/io5";
+import ModalHeader from "./ModalHeader";
+import SearchInput from "./SearchInput";
+import LoadingSpinner from "./LoadingSpinner";
+import ProductList from "./ProductList";
+import ModalFooter from "./ModalFooter";
 
 interface SelectState {
   [productId: number]: {
@@ -54,13 +57,30 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
 
   useEffect(() => {
     if (open) {
-      setSelected({});
-      setItems([]);
-      setPage(0);
-      setInitialLoading(true);
-      fetchProducts(true);
+      setTimeout(() => {
+        setSelected({});
+        setItems([]);
+        setPage(0);
+        setInitialLoading(true);
+        fetchProducts(true);
+      }, 0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    fetchProducts(true);
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+      setPage((p) => p + 1);
+      fetchProducts();
+    }
+  };
 
   const toggleProduct = (product: Product) => {
     const selectableVariants = product.variants.filter(
@@ -113,13 +133,16 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
 
   const confirmSelection = () => {
     const result: Product[] = Object.values(selected).map(
-      ({ product, variants }) => ({
-        ...product,
-        variants: Object.values(variants),
-        isExpanded: false,
-        discountType: "PERCENT",
-        discountValue: 0,
-      })
+      ({ product, variants }) => {
+        const variantList = Object.values(variants);
+        return {
+          ...product,
+          variants: variantList,
+          isExpanded: variantList.length > 1 ? false : true,
+          discountType: "PERCENT",
+          discountValue: 0,
+        };
+      }
     );
 
     onConfirm(result);
@@ -131,129 +154,29 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-center">
-      <div className="bg-white w-165 max-h-[80vh] rounded shadow flex flex-col">
-        <div className="p-4 px-5 border-b border-neutral-300  flex justify-between">
-          <span className="font-semibold">Select Products</span>
-          <button onClick={onClose} className="cursor-pointer">
-            <IoMdClose size={20} />
-          </button>
-        </div>
+      <div className="bg-white w-165 max-h-[80vh] mx-4 rounded shadow flex flex-col">
+        <ModalHeader onClose={onClose} />
 
-        <div className="shadow-sm">
-          <div className="flex gap-2 items-center m-4 mx-5 px-3 py-2 border text-[15px] border-neutral-300 focus:outline-none">
-            <IoSearchOutline size={20} className="text-neutral-400" />
-            <input
-              className="focus:outline-none w-full focus:border-none"
-              placeholder="Search products"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-                fetchProducts(true);
-              }}
-            />
-          </div>
-        </div>
+        <SearchInput value={search} onChange={handleSearchChange} />
 
         {initialLoading ? (
-          <div className="flex-1 flex justify-center items-center p-10 border-y border-neutral-300">
-            <span className="">Loading...</span>
-          </div>
+          <LoadingSpinner />
         ) : (
-          <div
-            className="flex-1 overflow-auto  border-y py-2 border-neutral-300"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-                setPage((p) => p + 1);
-                fetchProducts();
-              }
-            }}
-          >
-            {items.map((product) => {
-              const selectedProduct = selected[product.id];
-              const isProductselected =
-                !!selectedProduct &&
-                Object.keys(selectedProduct.variants).length > 0;
-
-              return (
-                <div key={product.id} className="">
-                  <div className="flex items-center gap-3 px-5">
-                    <input
-                      type="checkbox"
-                      checked={isProductselected}
-                      onChange={() => toggleProduct(product)}
-                      className="h-4 w-4"
-                    />
-
-                    <img
-                      src={product.image?.src || ""}
-                      className="w-9 h-9 rounded overflow-hidden bg-gray-100 object-cover"
-                    />
-
-                    <span className="text-[15px]">{product.title}</span>
-                  </div>
-
-                  <div className="py-3 text-[15px]">
-                    {product.variants.map((variant) => {
-                      const disabled = existingVariantIds.has(variant.id);
-                      return (
-                        <div
-                          key={variant.id}
-                          className="flex items-center pl-12 gap-3 px-3 py-4 border-y border-neutral-300"
-                        >
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4"
-                            disabled={disabled}
-                            checked={
-                              disabled
-                                ? true
-                                : !!selectedProduct?.variants[variant.id]
-                            }
-                            onChange={() => toggleVariant(product, variant)}
-                          />
-                          <span className="flex-1 pl-5 text-[15px]">
-                            {variant.title}
-                          </span>
-                          <div className="flex gap-6">
-                            {variant.inventory_quantity && (
-                              <span className="flex-1">
-                                {variant.inventory_quantity} available
-                              </span>
-                            )}
-                            <span className="text-[15px]">
-                              ${variant.price}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ProductList
+            products={items}
+            selected={selected}
+            existingVariantIds={existingVariantIds}
+            onToggleProduct={toggleProduct}
+            onToggleVariant={toggleVariant}
+            onScroll={handleScroll}
+          />
         )}
 
-        <div className="p-4 px-5 flex justify-between items-center">
-          <span className="text-sm">{selectedCount} products selected</span>
-
-          <div className="flex gap-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border cursor-pointer border-neutral-500 rounded"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmSelection}
-              className="px-4 py-2 bg-[#008060] text-white rounded cursor-pointer"
-            >
-              Add
-            </button>
-          </div>
-        </div>
+        <ModalFooter
+          selectedCount={selectedCount}
+          onClose={onClose}
+          onConfirm={confirmSelection}
+        />
       </div>
     </div>
   );

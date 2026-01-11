@@ -1,19 +1,16 @@
-import { IoMdClose } from "react-icons/io";
-import type { Product } from "../../types/product";
-import VariantItem from "../VariantItem/VariantItem";
-import { useProducts } from "../../context/useProducts";
 import { useState } from "react";
-import { MdDragIndicator } from "react-icons/md";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { closestCenter, DndContext } from "@dnd-kit/core";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
-import { BiSolidPencil } from "react-icons/bi";
+import { arrayMove } from "@dnd-kit/sortable";
+import { useProducts } from "../../context/useProducts";
+import type { Product } from "../../types/product";
+import type { DiscountType } from "../../types/variant";
+import DragHandle from "../shared/DragHandle";
+import ProductTitleInput from "../shared/ProductTitleInput";
+import DiscountSection from "../shared/DiscountSection";
+import VariantToggle from "../shared/VariantToggle";
+import VariantList from "./VariantList";
+import CloseButton from "../VariantItem/CloseButton";
 
 interface Props {
   product: Product;
@@ -36,7 +33,7 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
 
   const updateProductDiscount = (
     field: "discountType" | "discountValue",
-    value: any
+    value: "PERCENT" | "FIXED" | DiscountType | number
   ) => {
     setProducts((prev) =>
       prev.map((p, i) => (i === index ? { ...p, [field]: value } : p))
@@ -62,7 +59,10 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
     updateProductDiscount("discountValue", 0);
   };
 
-  const onVariantDragEnd = (event: any) => {
+  const onVariantDragEnd = (event: {
+    active: { id: number };
+    over: { id: number } | null;
+  }) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -81,108 +81,53 @@ const ProductItem = ({ product, index, total, openPicker }: Props) => {
     );
   };
 
-  const showToggle = product.variants.length > 0;
+  const canRemove = total > 1;
 
   return (
-    <div ref={setNodeRef} style={style} className="m-2 my-3">
-      <div className="flex w-full items-center gap-2">
-        <span
-          {...listeners}
-          {...attributes}
-          className="cursor-grab text-gray-500"
-        >
-          <MdDragIndicator size={23} />
-        </span>
+    <div ref={setNodeRef} style={style} className="m-2 my-4">
+      <div className="flex flex-col sm:flex-row sm:flex w-full sm:items-center gap-2">
+        <div className="flex w-full items-center gap-1 sm:gap-2">
+          <DragHandle attributes={attributes} listeners={listeners} />
 
-        <div className="py-1 w-full items-center flex justify-between text-sm px-4 border border-neutral-300 shadow-sm bg-white">
-          <input
-            value={product.title}
-            readOnly
-            className="w-full focus:outline-none"
-            placeholder="Select Product"
-          />
-          <button
-            className="p-2 cursor-pointer hover:bg-neutral-200"
-            onClick={() => openPicker()}
-          >
-            <BiSolidPencil size={20} className="text-[#008060]" />
-          </button>
+          <span className="text-sm text-neutral-600 pr-1 font-medium">
+            {index + 1}.
+          </span>
+
+          <ProductTitleInput value={product.title} onEdit={openPicker} />
+
+          <div className="w-7 items-center flex sm:hidden justify-center">
+            {canRemove && <CloseButton onRemove={removeProduct} size={20} />}
+          </div>
         </div>
 
-        <div className="flex space-x-3 w-[70%]">
-          {!showDiscount ? (
-            <button
-              onClick={enableDiscount}
-              className="text-sm w-full px-4 py-3 cursor-pointer border-2 rounded bg-[#008060] text-white"
-            >
-              Add Discount
-            </button>
-          ) : (
-            <>
-              <div className="flex space-x-2">
-                <input
-                  type="number"
-                  placeholder="0"
-                  className="py-2 px-4 w-25 border border-neutral-400 shadow-sm focus:outline-none"
-                  onChange={(e) =>
-                    updateProductDiscount(
-                      "discountValue",
-                      Number(e.target.value)
-                    )
-                  }
-                  value={product.discountValue || ""}
-                />
+        <div className="flex space-x-3 w-[50%] sm:w-[70%] ml-12 sm:ml-0">
+          <DiscountSection
+            showDiscount={showDiscount}
+            discountValue={product.discountValue}
+            discountType={product.discountType as DiscountType}
+            onEnableDiscount={enableDiscount}
+            onDiscountChange={updateProductDiscount}
+          />
 
-                <select
-                  className="py-2 px-2 w-25 text-sm border border-neutral-400 shadow-sm focus:outline-none"
-                  value={product.discountType ?? "PERCENT"}
-                  onChange={(e) =>
-                    updateProductDiscount("discountType", e.target.value)
-                  }
-                >
-                  <option value="PERCENT">% Off</option>
-                  <option value="FLAT">Flat off</option>
-                </select>
-              </div>
-            </>
-          )}
-          {total > 1 && (
-            <button onClick={removeProduct} className="cursor-pointer">
-              <IoMdClose size={20} />
-            </button>
-          )}
+          <div className="w-7 items-center hidden sm:flex justify-center">
+            {canRemove && <CloseButton onRemove={removeProduct} size={20} />}
+          </div>
         </div>
       </div>
-      {showToggle && (
-        <span
-          onClick={toggleVariants}
-          className="text-sm flex justify-end mt-1 mr-9 cursor-pointer text-blue-600 underline"
-        >
-          {product.isExpanded ? "Hide variants" : "Show variants"}
-        </span>
+
+      {product.variants.length > 1 && (
+        <VariantToggle
+          isExpanded={product.isExpanded ?? false}
+          onToggle={toggleVariants}
+        />
       )}
 
-      {product.isExpanded && (
-        <div className="ml-12">
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragEnd={onVariantDragEnd}
-            modifiers={[restrictToParentElement]}
-          >
-            <SortableContext
-              items={product.variants.map((v) => v.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {product.variants.map((variant) => (
-                <VariantItem
-                  key={variant.id}
-                  variant={variant}
-                  productIndex={index}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
+      {(product.variants.length === 1 || product.isExpanded) && (
+        <VariantList
+          product={product}
+          productIndex={index}
+          onVariantDragEnd={onVariantDragEnd}
+        />
       )}
     </div>
   );
