@@ -1,6 +1,9 @@
 # Product list manager
 
-A React app to pick products, select variants, apply discounts and reorder everything using drag & drop. Built with React, TypeScript, TailwindCSS, dnd-kit (drag & drop) and host on [Netlify](https://create-products-monk-commerce.netlify.app/).
+A React app to pick products, select variants, apply discounts and reorder everything using drag & drop. Built with React, Typescript, TailwindCSS, dnd-kit (drag & drop) and host on [Netlify](https://create-products-monk-commerce.netlify.app/).
+
+#### Demo Video (Loom)
+Loom walkthrough: https://www.loom.com/share/629ce0b1d3ff493996bdcbe6e807ea0b
 
 ---
 ## Tech stack
