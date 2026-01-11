@@ -144,8 +144,8 @@ const ProductPickerModal = ({ open, onClose, onConfirm }: Props) => {
         };
       }
     );
-
     onConfirm(result);
+    setSearch("");
   };
 
   const selectedCount = Object.keys(selected).length;
